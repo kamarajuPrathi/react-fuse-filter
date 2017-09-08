@@ -3,14 +3,14 @@ import Select from 'react-select-plus'
 import Fuse from 'fuse.js'
 import _ from 'lodash'
 
-let keysArray=[]
+let keysArray = []
 
 class ReactFuseFilter extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       filteredData: [],
-      filters:[],
+      filters: [],
       options: [],
       data: [
 
@@ -180,71 +180,78 @@ class ReactFuseFilter extends React.Component {
     }
   }
 
-  getKeys = (obj, val) => {
+  getKeys=(obj, val)=>{
     let objects = []
     for (const i in obj) {
       if (!obj.hasOwnProperty(i)) continue
-      if (typeof obj[i] == 'object') {
+      if ((typeof obj[i] == 'object' && !(Array.isArray(obj[i]))) ||Array.isArray(obj[i]) && typeof obj[i][0] === 'object' ){
         objects = objects.concat(this.getKeys(obj[i], val))
-      } else if (obj[i].match(new RegExp(val, 'gi')) !== null) {
-        objects.push(i)
+      }
+      else  {
+        if ( String(obj[i]).match(new RegExp(String(val), 'gi')) !== null){
+          objects.push(i)
+        }else{
+          if( Array.isArray(obj[i]) && typeof obj[i][0] !== 'object' && obj[i].includes(val) ){
+            objects.push(i)
+          }
+        }
       }
     }
     return objects
   }
 
   onInputChange = (inputVal) => {
-    if(inputVal && inputVal.trim()!=="") {
-      const uniqueOptions = Array.from(new Set(this.getKeys(this.state.data, inputVal))).sort()
+    if (inputVal && inputVal.trim() !== '') {
+      const uniqueOptions = _.uniq(this.getKeys(this.state.data, inputVal)).sort()
       const updateOptions = uniqueOptions.map((uo) => {
         return { value: uo, label: uo + ':' + inputVal }
       })
       updateOptions.unshift({ value: inputVal, label: inputVal })
       this.setState({ options: updateOptions })
-    }else{
-      this.setState({options:[]})
+    } else {
+      this.setState({ options: [] })
     }
   }
 
-  onChangeData = (value) => {
+  onChangeData = (e, value) => {
     this.setState({ data: value })
   }
 
-  setSelectedFilter = (filters) =>{
-    this.setState({filters:filters})
-    if(filters.length>0) {
+  setSelectedFilter = (filters) => {
+    this.setState({ filters: filters })
+    if (filters.length > 0) {
       this.getFilteredData(filters[filters.length - 1])
-      this.setState({options:[]})
-    }else{
-      this.setState({filteredData:[]})
+      this.setState({ options: [] })
+    } else {
+      this.setState({ filteredData: [] })
     }
 
   }
 
-  iterate=(obj, stack) => {
-  for (const property in obj) {
-    if (obj.hasOwnProperty(property)) {
-      const x = stack!==''?`${stack}.${property}` : property;
-      if (typeof obj[property] === "object") {
-        this.iterate(obj[property], x);
-      } else {
+  iterate = (obj, stack) => {
+    for (const property in obj) {
+      if (obj.hasOwnProperty(property)) {
+        const x = stack !== '' ? `${stack}.${property}` : property
+        if (typeof obj[property] === 'object') {
+          this.iterate(obj[property], x)
+        } else {
 
-        const key= stack!==''?`${stack}.${property}` : property;
-        keysArray.push(key)
+          const key = stack !== '' ?`${stack}.${property}`: property
+          keysArray.push(key.replace(/.\d+/g,""))
+        }
       }
     }
+
+    return keysArray
   }
 
-  return keysArray
-}
-
-
   getFilteredData(filter) {
-    const data = this.state.filteredData.length>0?this.state.filteredData:this.state.data
-    const allKeys = _.uniq(_.flatMap(data,(x)=>this.iterate(x,'')))
-    const keys = filter.value === filter.label?allKeys:_.filter(allKeys,(k)=>k.includes(filter.value))
-    const value = filter.value === filter.label?filter.value:filter.label.split(":")[1]
-    const fuse = new Fuse(data, { keys:[...keys],threshold:0.2 })
+    const data = this.state.filteredData.length > 0 ? this.state.filteredData : this.state.data
+    const allKeys = _.uniq(_.flatMap(data, (x) => this.iterate(x, '')))
+    const keys = filter.value === filter.label ? allKeys : _.filter(allKeys, (k) => k.includes(filter.value))
+    const value = filter.value === filter.label ? filter.value : filter.label.split(':')[1]
+    const fuse = new Fuse(data, { keys: [...keys], threshold: 0.2 })
+    console.log(allKeys, fuse.search(value))
     this.setState({ filteredData: fuse.search(value) })
 
   }
@@ -253,15 +260,15 @@ class ReactFuseFilter extends React.Component {
     return (
       <div className="row">
         <div>
-        <h4>Input Data</h4>
-        <textarea id="itemsTextArea"
-                  cols={100}
-                  rows={20}
-                  value={JSON.stringify(this.state.data, undefined, 4)}
-                  onChange={this.onChangeData}>
+          <h4>Input Data</h4>
+          <textarea id="itemsTextArea"
+                    cols={100}
+                    rows={20}
+                    value={JSON.stringify(this.state.data, undefined, 4)}
+                    onChange={this.onChangeData}>
          </textarea>
         </div>
-         <br/>
+        <br />
         <Select
           multi
           options={this.state.options}
@@ -271,14 +278,14 @@ class ReactFuseFilter extends React.Component {
           onChange={this.setSelectedFilter}
           value={this.state.filters}
         />
-        <br/>
-          <h4>Filtered Data</h4>
-          <textarea id="itemsFilteredTextArea"
-                    disabled
-                    cols={100}
-                    rows={20}
-                    value={JSON.stringify(this.state.filteredData, undefined, 4)}
-                    ></textarea>
+        <br />
+        <h4>Filtered Data</h4>
+        <textarea id="itemsFilteredTextArea"
+                  disabled
+                  cols={100}
+                  rows={20}
+                  value={JSON.stringify(this.state.filteredData, undefined, 4)}
+        ></textarea>
 
       </div>
 
