@@ -174,6 +174,10 @@ class ReactFuseFilter extends React.Component {
             firstName: 'David',
             lastName: 'Maine',
           },
+          test:[{
+            Kemo:"dhgvgfhsdf",
+            iner:[{inner:[{innerr:"fgdvsfhsdvfsdf"},{innerr1:"fgdvsfhsdvfsdf"},{innerr2:"fgdvsfhsdvfsdf"}]}]
+          }]
         },
       ],
 
@@ -237,7 +241,7 @@ class ReactFuseFilter extends React.Component {
         } else {
 
           const key = stack !== '' ?`${stack}.${property}`: property
-          keysArray.push(key.replace(/.\d+/g,""))
+          keysArray.push(key.replace(/\.\d+/g,""))
         }
       }
     }
