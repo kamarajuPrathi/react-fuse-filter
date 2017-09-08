@@ -1,6 +1,7 @@
 import React from 'react'
 import {render} from 'react-dom'
-
+import   "../../node_modules/react-select-plus/dist/react-select-plus.css";
+import   "../../src/styles.css";
 import Component from '../../src'
 
 let Demo = React.createClass({
